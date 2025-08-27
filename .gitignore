@@ -1,0 +1,19 @@
+# Athens storage and export directories
+storage/
+storage.bak/
+athens-export/
+athens-import/
+
+# Generated archives
+*.tar.gz
+
+# Test directories
+test-*/
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS specific files
+.DS_Store
+Thumbs.db
