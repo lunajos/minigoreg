@@ -1,0 +1,15 @@
+version: '3'
+
+services:
+  athens:
+    image: gomods/athens:latest
+    container_name: athens-proxy
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./storage:/var/lib/athens
+    environment:
+      - ATHENS_DISK_STORAGE_ROOT=/var/lib/athens
+      - ATHENS_STORAGE_TYPE=disk
+      # Default network mode is enabled to download modules from the internet

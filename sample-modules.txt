@@ -1,0 +1,18 @@
+# Sample Go modules list
+# Add one module per line in the format: module@version
+# If version is omitted, the latest version will be used
+
+# Common utility libraries
+github.com/stretchr/testify@v1.8.4
+github.com/spf13/cobra@v1.7.0
+github.com/spf13/viper@v1.16.0
+
+# Web frameworks
+github.com/gin-gonic/gin@v1.9.1
+github.com/labstack/echo/v4@v4.11.1
+
+# Database drivers
+github.com/lib/pq@v1.10.9
+go.mongodb.org/mongo-driver@v1.12.1
+
+# Add more modules as needed
