@@ -128,6 +128,8 @@ MiniGoReg solves the problem of managing Go modules in environments without inte
   - `download-modules.sh` - Script to download modules from the internet
   - `export-modules.sh` - Script to export modules for transfer
   - `import-modules.sh` - Script to import modules in the air-gapped environment
+  - `prepare-offline.sh` - Script to prepare all files for air-gapped deployment
+  - `offline-install.sh` - Script to install in an air-gapped environment
 - `sample-modules.txt` - Example module list to get started
 
 ## Troubleshooting
@@ -210,7 +212,24 @@ For more configuration options, see the [Athens documentation](https://docs.gomo
 This solution uses the following container:
 - **gomods/athens**: The Athens Go Module Proxy (version: latest or specific version like v0.11.0)
 
-### Preparing for Air-Gapped Deployment
+### Automated Offline Preparation
+
+We provide a script that automates the entire process of preparing for offline installation:
+
+```bash
+./scripts/prepare-offline.sh [path-to-module-list]
+```
+
+This script will:
+1. Start Athens proxy if not already running
+2. Pull and save the Athens container image
+3. Download all modules from your module list
+4. Export modules to a portable archive
+5. Package everything into a single archive for transfer
+
+The result is a `minigoreg-offline.tar.gz` file that contains everything needed for the air-gapped environment.
+
+### Manual Preparation (Alternative)
 
 #### 1. Save the Container Image
 
@@ -246,13 +265,33 @@ Transfer this package to your air-gapped environment using approved methods (phy
 
 ### Setting Up in Air-Gapped Environment
 
-#### 1. Extract the Transfer Package
+#### Automated Installation
+
+We provide a script that automates the entire installation process in the air-gapped environment:
+
+```bash
+# Extract the transfer package first
+tar -xzf minigoreg-offline.tar.gz
+
+# Run the installation script
+./scripts/offline-install.sh
+```
+
+This script will:
+1. Load the Athens container image
+2. Import the module cache
+3. Start Athens in offline mode
+4. Verify the installation
+
+#### Manual Installation (Alternative)
+
+##### 1. Extract the Transfer Package
 
 ```bash
 tar -xzf minigoreg-airgap.tar.gz
 ```
 
-#### 2. Load the Container Image
+##### 2. Load the Container Image
 
 ```bash
 podman load -i athens-image.tar
@@ -263,19 +302,19 @@ Verify the image was loaded:
 podman images | grep athens
 ```
 
-#### 3. Import the Module Cache
+##### 3. Import the Module Cache
 
 ```bash
 ./scripts/import-modules.sh athens-modules.tar.gz
 ```
 
-#### 4. Start Athens in Offline Mode
+##### 4. Start Athens in Offline Mode
 
 ```bash
 ./scripts/start-athens.sh offline
 ```
 
-#### 5. Configure Go Environment
+##### 5. Configure Go Environment
 
 ```bash
 export GOPROXY=http://localhost:3000
