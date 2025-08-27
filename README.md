@@ -202,3 +202,157 @@ Athens proxy is configured through environment variables in the `start-athens.sh
 - `ATHENS_DOWNLOAD_MODE`: Download behavior (none for offline mode)
 
 For more configuration options, see the [Athens documentation](https://docs.gomods.io/).
+
+## Complete Air-Gapped Deployment Guide
+
+### Container Requirements
+
+This solution uses the following container:
+- **gomods/athens**: The Athens Go Module Proxy (version: latest or specific version like v0.11.0)
+
+### Preparing for Air-Gapped Deployment
+
+#### 1. Save the Container Image
+
+In your internet-connected environment, pull and save the Athens container image:
+
+```bash
+# Pull the Athens image
+podman pull gomods/athens:latest
+
+# Save the image to a tar file
+podman save -o athens-image.tar gomods/athens:latest
+```
+
+#### 2. Transfer Required Files
+
+You'll need to transfer the following files to your air-gapped environment:
+
+1. **Container image**: `athens-image.tar`
+2. **Module cache**: `athens-modules.tar.gz` (created by export-modules.sh)
+3. **Project files**: All scripts and configuration files
+
+```bash
+# Create a complete package for transfer
+tar -czf minigoreg-airgap.tar.gz \
+    athens-image.tar \
+    athens-modules.tar.gz \
+    scripts/ \
+    README.md \
+    sample-modules.txt
+```
+
+Transfer this package to your air-gapped environment using approved methods (physical media, approved file transfer, etc.).
+
+### Setting Up in Air-Gapped Environment
+
+#### 1. Extract the Transfer Package
+
+```bash
+tar -xzf minigoreg-airgap.tar.gz
+```
+
+#### 2. Load the Container Image
+
+```bash
+podman load -i athens-image.tar
+```
+
+Verify the image was loaded:
+```bash
+podman images | grep athens
+```
+
+#### 3. Import the Module Cache
+
+```bash
+./scripts/import-modules.sh athens-modules.tar.gz
+```
+
+#### 4. Start Athens in Offline Mode
+
+```bash
+./scripts/start-athens.sh offline
+```
+
+#### 5. Configure Go Environment
+
+```bash
+export GOPROXY=http://localhost:3000
+```
+
+Add this to your shell profile for persistence.
+
+### Verifying the Setup
+
+1. **Check Athens is running**:
+   ```bash
+   curl http://localhost:3000/healthz
+   ```
+
+2. **Test with a simple Go project**:
+   ```bash
+   mkdir -p test-project && cd test-project
+   go mod init test-project
+   # Try to get a module that was included in your cache
+   go get github.com/stretchr/testify@v1.8.4
+   ```
+
+### Updating the Air-Gapped Environment
+
+When you need to update your module cache with new modules or versions:
+
+1. In the internet-connected environment:
+   - Update your module list
+   - Download new modules
+   - Create a new export
+
+2. Transfer the new module archive to the air-gapped environment
+
+3. In the air-gapped environment:
+   - Stop Athens: `podman stop athens-proxy`
+   - Import the new modules
+   - Restart Athens in offline mode
+
+### Troubleshooting Air-Gapped Deployments
+
+#### Missing Container Image
+
+If you see an error like "image not found locally":
+
+```bash
+# Check if the image exists
+podman images | grep athens
+
+# If not, load it again
+podman load -i athens-image.tar
+```
+
+#### Module Not Found
+
+If a module is not found in the air-gapped environment:
+
+1. Verify it was included in the export:
+   ```bash
+   find ./storage -name "*module-name*"
+   ```
+
+2. If not found, you'll need to:
+   - Add it to your module list in the internet-connected environment
+   - Download and create a new export
+   - Transfer and import in the air-gapped environment
+
+#### Container Networking Issues
+
+If you can't connect to Athens on port 3000:
+
+```bash
+# Check if the container is running
+podman ps | grep athens
+
+# Check container logs
+podman logs athens-proxy
+
+# Restart the container if needed
+./scripts/start-athens.sh offline
+```
