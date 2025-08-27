@@ -8,7 +8,7 @@ EXPORT_FILE="athens-modules.tar.gz"
 
 # Check if Athens proxy is running
 if ! curl -s http://localhost:3000/healthz > /dev/null; then
-    echo "Error: Athens proxy is not running. Start it with 'podman-compose up -d'"
+    echo "Error: Athens proxy is not running. Start it with './scripts/start-athens.sh'"
     exit 1
 fi
 
